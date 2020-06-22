@@ -9,11 +9,9 @@ networks:
   type: ""
 storage_pools:
 - config:
-    lvm.use_thinpool: "false"
-    source: /dev/xvdba
   description: ""
   name: default
-  driver: lvm
+  driver: dir
 profiles:
 - config: {}
   description: ""

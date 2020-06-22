@@ -11,7 +11,7 @@ description: Default LXD profile
 devices:                                                                                                              
   eth0:                                                                                                               
     nictype: bridged                                                                                                  
-    parent: lxdbr0                                                                                                    
+    parent: br0                                                                                                    
     type: nic                                                                                                         
   root:                                                                                                               
     path: /                                                                                                           

@@ -8,10 +8,11 @@ ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N ""
 SSH_PUBKEY="/home/ubuntu/.ssh/id_rsa.pub"
 
 LXC_IMAGE="ubuntu:bionic"
-sudo lxc profile edit default < lxc-profile-default.yaml
+sudo lxc profile create rke
+sudo lxc profile edit rke < lxc-profile-default.yaml
 sudo lxc profile create docker
 sudo lxc profile edit docker < lxc-profile-docker.yaml
-LXC_PROFILES="--profile default --profile docker"
+LXC_PROFILES="--profile rke --profile docker"
 
 # Create containers
 for NODE in ${NODES}; do lxc launch ${LXC_PROFILES} ${LXC_IMAGE} ${NODE} ; done
@@ -25,15 +26,19 @@ for NODE in ${NODES}; do lxc file push ${SSH_PUBKEY} ${NODE}/home/ubuntu/.ssh/au
 # Install Docker
 for NODE in ${NODES}; do
 	# lxc exec ${NODE} -- bash -c 'curl -L get.docker.com | bash'
-    lxc exec ${NODE} -- bash -c 'curl https://releases.rancher.com/install-docker/18.06.sh | sh'
+    lxc exec ${NODE} -- bash -c 'curl https://releases.rancher.com/install-docker/19.03.sh | sh'
 	# don't use docker 19.03 for now, it doesn't work at least on lxc
 	# lxc exec ${NODE} -- bash -c 'sudo apt install docker.io -y'
 	# Add ubuntu user to docker group
 	lxc exec ${NODE} -- sudo usermod -aG docker ubuntu
+	# Add shared mount
+	lxc exec ${NODE} -- sudo mount --make-shared /
+	# Add ksmg to containers
+	lxc config device add ${NODE} "kmsg" unix-char source="/dev/kmsg" path="/dev/kmsg"
 	# Workaround bug (for lxc ???)
-	lxc exec ${NODE} -- mkdir -p /etc/systemd/system/docker.service.d
+	#lxc exec ${NODE} -- mkdir -p /etc/systemd/system/docker.service.d
 	#lxc file push -v <(echo -e '[Service]\nMountFlags=shared') ${NODE}/etc/systemd/system/docker.service.d/override.conf
-	lxc file push docker-shared ${NODE}/etc/systemd/system/docker.service.d/override.conf
+	#lxc file push docker-shared ${NODE}/etc/systemd/system/docker.service.d/override.conf
 	lxc exec ${NODE} -- systemctl enable --now docker
 	lxc exec ${NODE} -- systemctl restart docker.service
 
