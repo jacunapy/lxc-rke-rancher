@@ -3,7 +3,13 @@ mkdir -p /home/ubuntu/.config/lxc/
 sudo chown -R ubuntu:ubuntu /home/ubuntu/.config
 lxd init --preseed < lxd-init.yaml
 #sudo lxc delete rke1 rke2 rke3 --force
-NODES=$(echo rke{1..3})
+
+# Receive name for container and number of container (default name rke and default number 3)
+NAME=${1:-rke}
+NUMBER=${2:-3}
+NODES=`echo $(seq -f "${NAME}%g" 1 ${NUMBER})`
+
+#NODES=$(echo rke{1..3})
 ssh-keygen -b 2048 -t rsa -f /home/ubuntu/.ssh/id_rsa -q -N ""
 SSH_PUBKEY="/home/ubuntu/.ssh/id_rsa.pub"
 
